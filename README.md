@@ -1,6 +1,6 @@
 # New Developer Quickstart
 
-This repo contains a **WordPress theme + plugin** for Ziaoba’s streaming experience, plus some leftover root-level Node/Vite scaffold files.
+This repo contains a **WordPress theme + plugin** for Ziaoba’s streaming experience.
 
 ## 1) What matters most in this repo
 
@@ -11,7 +11,7 @@ Primary runtime components:
 
 Secondary/non-primary:
 
-- Root `README.md`, `package.json`, and `node_modules/` are from an AI Studio/Vite app scaffold and are not the main runtime for the WP site.
+- Root `README.md` is not the main runtime for the WP site.
 
 ---
 
