@@ -91,10 +91,59 @@ if ( ! function_exists( 'ziaoba_analytics_page_callback' ) ) {
             $view_data[] = (int) get_post_meta( $post->ID, '_ziaoba_views', true );
         }
 
-        // Weekly Trend Data (Mocked for now but structured for Chart.js)
-        $trend_labels = array( 'Week 1', 'Week 2', 'Week 3', 'Week 4' );
-        $impression_trend = array( 1200, 1900, 3000, 5000 );
-        $dwell_trend = array( 45, 52, 48, 60 );
+        // 4. Aggregate Real Trend Data
+        $trend_labels = array();
+        $trend_impressions = array();
+        $trend_dwell = array();
+        
+        // Create date range array
+        $current = strtotime($from);
+        $last = strtotime($to);
+        $dates = array();
+        while ($current <= $last) {
+            $dates[] = date('Y-m-d', $current);
+            $current = strtotime('+1 day', $current);
+        }
+
+        // Initialize aggregates
+        $daily_views = array_fill_keys($dates, 0);
+        $daily_dwell = array_fill_keys($dates, 0);
+
+        // Query all posts to aggregate logs
+        $all_posts_query = new WP_Query(array(
+            'post_type' => array('entertainment', 'education'),
+            'posts_per_page' => -1,
+            'fields' => 'ids'
+        ));
+
+        if ($all_posts_query->have_posts()) {
+            foreach ($all_posts_query->posts as $p_id) {
+                $log = get_post_meta($p_id, '_ziaoba_views_log', true);
+                if (is_array($log)) {
+                    foreach ($log as $date => $count) {
+                        if (isset($daily_views[$date])) {
+                            $daily_views[$date] += $count;
+                        }
+                    }
+                }
+                
+                // Mocking dwell trend for now as we don't have a dwell log yet, 
+                // but we use the real view count to scale it.
+                $avg_dwell = (int)get_post_meta($p_id, '_ziaoba_avg_dwell', true) ?: 30;
+                foreach ($dates as $date) {
+                    if (isset($daily_views[$date]) && $daily_views[$date] > 0) {
+                        $daily_dwell[$date] += ($daily_views[$date] * $avg_dwell) / 10; // Scaled for trend
+                    }
+                }
+            }
+        }
+
+        // Format for JS
+        foreach ($dates as $date) {
+            $trend_labels[] = date('M d', strtotime($date));
+            $trend_impressions[] = $daily_views[$date];
+            $trend_dwell[] = round($daily_dwell[$date] / (count($all_posts_query->posts) ?: 1), 1);
+        }
 
         $analytics_data = array(
             'topViews' => array(
@@ -103,8 +152,8 @@ if ( ! function_exists( 'ziaoba_analytics_page_callback' ) ) {
             ),
             'trends' => array(
                 'labels'      => $trend_labels,
-                'impressions' => $impression_trend,
-                'dwell'       => $dwell_trend,
+                'impressions' => $trend_impressions,
+                'dwell'       => $trend_dwell,
             )
         );
 
@@ -139,7 +188,7 @@ if ( ! function_exists( 'ziaoba_analytics_page_callback' ) ) {
                     <div style="height: 300px;"><canvas id="viewsChart"></canvas></div>
                 </div>
                 <div class="card" style="padding: 20px; background: #fff; border: 1px solid #ccd0d4;">
-                    <h2><?php _e( 'Weekly Impressions Trend', 'ziaoba' ); ?></h2>
+                    <h2><?php _e( 'Daily Performance Trend', 'ziaoba' ); ?></h2>
                     <div style="height: 300px;"><canvas id="trendChart"></canvas></div>
                 </div>
             </div>
