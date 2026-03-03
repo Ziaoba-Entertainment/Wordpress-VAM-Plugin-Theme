@@ -1,7 +1,6 @@
 <?php
 /**
- * index.php - Required fallback template for classic themes.
- * ziaoba-stream/index.php
+ * index.php - Fallback template.
  */
 
 get_header(); ?>

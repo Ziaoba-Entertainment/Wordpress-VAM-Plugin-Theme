@@ -9,25 +9,17 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 add_action( 'wp_enqueue_scripts', 'ziaoba_enqueue_player_assets' );
 
-if ( ! function_exists( 'ziaoba_enqueue_player_assets' ) ) {
-    function ziaoba_enqueue_player_assets() {
-        // Video.js
-        wp_enqueue_style( 'videojs-css', 'https://vjs.zencdn.net/8.10.0/video-js.css', array(), '8.10.0' );
-        wp_enqueue_script( 'videojs-js', 'https://vjs.zencdn.net/8.10.0/video.min.js', array(), '8.10.0', true );
+function ziaoba_enqueue_player_assets() {
+    // Video.js
+    wp_enqueue_style( 'videojs-css', 'https://vjs.zencdn.net/8.10.0/video-js.css', array(), '8.10.0' );
+    wp_enqueue_script( 'videojs-js', 'https://vjs.zencdn.net/8.10.0/video.min.js', array(), '8.10.0', true );
 
-        // HLS.js (Video.js handles it mostly, but good to have for older browsers)
-        wp_enqueue_script( 'hls-js', 'https://cdn.jsdelivr.net/npm/hls.js@latest', array(), '1.0.0', true );
-
-        // Custom Player CSS
-        wp_add_inline_style( 'videojs-css', '
-            .video-js .vjs-big-play-button { border-radius: 50%; width: 2em; height: 2em; line-height: 2em; margin-top: -1em; margin-left: -1em; background-color: rgba(229, 9, 20, 0.8); border-color: transparent; }
-            .video-js:hover .vjs-big-play-button { background-color: #E50914; }
-            .vjs-control-bar { background-color: rgba(10, 10, 10, 0.9); }
-            .video-js.vjs-fluid { min-height: 200px; background: #000; }
-            .ziaoba-player-wrapper { position: relative; width: 100%; }
-            .ziaoba-restricted { background: #1a1a1a; padding: 40px; text-align: center; border: 1px solid #333; color: #fff; }
-            .ziaoba-btn { display: inline-block; padding: 10px 25px; background: #E50914; color: #fff; text-decoration: none; border-radius: 4px; font-weight: bold; margin-top: 15px; }
-            .ziaoba-btn:hover { background: #00C853; }
-        ' );
-    }
+    // Custom Player CSS
+    wp_add_inline_style( 'videojs-css', '
+        .video-js .vjs-big-play-button { border-radius: 50%; width: 2em; height: 2em; line-height: 2em; margin-top: -1em; margin-left: -1em; background-color: rgba(229, 9, 20, 0.8); border-color: transparent; }
+        .video-js:hover .vjs-big-play-button { background-color: #E50914; }
+        .vjs-control-bar { background-color: rgba(10, 10, 10, 0.9); }
+        .video-js.vjs-fluid { display: block; width: 100%; min-height: 200px; background: #000; }
+        .ziaoba-player-wrapper { position: relative; width: 100%; display: block; }
+    ' );
 }
