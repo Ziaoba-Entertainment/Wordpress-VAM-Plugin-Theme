@@ -75,5 +75,58 @@ function ziaoba_track_view_callback() {
 register_activation_hook( __FILE__, 'ziaoba_vam_activate' );
 function ziaoba_vam_activate() {
     ziaoba_register_cpts();
+    
+    // Untick "Anyone can register" to force UM registration
+    update_option( 'users_can_register', 0 );
+    
+    // Set UM Default Forms via options
+    if ( function_exists( 'UM' ) ) {
+        $um_options = get_option( 'um_options', array() );
+        $um_options['default_login_form'] = 68;
+        $um_options['default_register_form'] = 67;
+        update_option( 'um_options', $um_options );
+    }
+
     flush_rewrite_rules();
 }
+
+/**
+ * Ensure UM settings are correct on init as well
+ */
+function ziaoba_ensure_um_settings() {
+    if ( ! is_admin() ) return;
+    
+    if ( get_option( 'users_can_register' ) != 0 ) {
+        update_option( 'users_can_register', 0 );
+    }
+}
+add_action( 'init', 'ziaoba_ensure_um_settings' );
+
+/**
+ * Google Site Kit Integration for UM
+ */
+function ziaoba_google_site_kit_um_button() {
+    // Prevent double rendering
+    static $rendered = false;
+    if ( $rendered ) return;
+    $rendered = true;
+
+    // We assume Site Kit is configured. 
+    // We render a button that points to the Google login action.
+    // Site Kit usually handles the 'google_login' action if configured for UM.
+    ?>
+    <div class="ziaoba-social-login">
+        <div class="ziaoba-separator">
+            <span>Or continue with</span>
+        </div>
+        <div class="ziaoba-social-buttons">
+            <a href="<?php echo esc_url( add_query_arg( 'action', 'google_login', home_url( '/login/' ) ) ); ?>" class="btn-google">
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
+                Sign in with Google
+            </a>
+        </div>
+    </div>
+    <?php
+}
+add_action( 'um_after_login_fields', 'ziaoba_google_site_kit_um_button', 20 );
+add_action( 'um_after_register_fields', 'ziaoba_google_site_kit_um_button', 20 );

@@ -34,7 +34,7 @@ get_header(); ?>
 
             <div style="margin-top: 30px; color: #737373; font-size: 16px;">
                 New to Ziaoba? 
-                <a href="<?php echo ( function_exists('um_get_core_page_url') ) ? um_get_core_page_url('register') : wp_registration_url(); ?>" style="color: #fff; font-weight: 500;">
+                <a href="<?php echo home_url( '/register/' ); ?>" style="color: #fff; font-weight: 500;">
                     Sign up now.
                 </a>
             </div>

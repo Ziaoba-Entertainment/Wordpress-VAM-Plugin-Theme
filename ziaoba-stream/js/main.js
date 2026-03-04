@@ -7,6 +7,26 @@ document.addEventListener('DOMContentLoaded', function() {
         lucide.createIcons();
     }
 
+    // Mobile Menu Toggle
+    const mobileToggle = document.getElementById('mobileToggle');
+    const navMenu = document.getElementById('navMenu');
+    if (mobileToggle && navMenu) {
+        mobileToggle.addEventListener('click', function() {
+            mobileToggle.classList.toggle('active');
+            navMenu.classList.toggle('active');
+            document.body.classList.toggle('no-scroll');
+        });
+
+        // Close menu when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!navMenu.contains(e.target) && !mobileToggle.contains(e.target) && navMenu.classList.contains('active')) {
+                mobileToggle.classList.remove('active');
+                navMenu.classList.remove('active');
+                document.body.classList.remove('no-scroll');
+            }
+        });
+    }
+
     // Initialize Swiper Carousels
     const swiperOptions = {
         slidesPerView: 2,
@@ -28,29 +48,6 @@ document.addEventListener('DOMContentLoaded', function() {
     if (document.querySelector('.edu-swiper')) {
         new Swiper('.edu-swiper', swiperOptions);
     }
-    if (document.querySelector('.drama-swiper')) {
-        new Swiper('.drama-swiper', swiperOptions);
-    }
-
-    // Search Toggle
-    const searchToggle = document.getElementById('searchToggle');
-    const searchForm = document.getElementById('searchForm');
-    
-    if (searchToggle && searchForm) {
-        searchToggle.addEventListener('click', function(e) {
-            e.stopPropagation();
-            searchForm.classList.toggle('active');
-            if (searchForm.classList.contains('active')) {
-                searchForm.querySelector('.search-field').focus();
-            }
-        });
-        
-        document.addEventListener('click', function(e) {
-            if (!searchForm.contains(e.target) && e.target !== searchToggle) {
-                searchForm.classList.remove('active');
-            }
-        });
-    }
 
     // Header Scroll Effect
     const header = document.getElementById('mainHeader');
@@ -61,4 +58,28 @@ document.addEventListener('DOMContentLoaded', function() {
             header.classList.remove('scrolled');
         }
     });
+
+    // Season Selector Filtering
+    const seasonSelector = document.getElementById('seasonSelector');
+    const episodeCards = document.querySelectorAll('.episode-card');
+
+    if (seasonSelector && episodeCards.length > 0) {
+        const filterEpisodes = (selectedSeason) => {
+            episodeCards.forEach(card => {
+                const cardSeason = card.getAttribute('data-season');
+                if (selectedSeason === 'all' || cardSeason === selectedSeason) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        };
+
+        // Initial filter based on default selection (latest season)
+        filterEpisodes(seasonSelector.value);
+
+        seasonSelector.addEventListener('change', function() {
+            filterEpisodes(this.value);
+        });
+    }
 });

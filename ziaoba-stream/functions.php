@@ -35,14 +35,16 @@ add_action( 'after_setup_theme', 'ziaoba_stream_setup' );
  * Enqueue Scripts and Styles
  */
 function ziaoba_stream_scripts() {
-    $version = wp_get_theme()->get( 'Version' ) . '.' . time();
+    $version = '1.0.1';
 
     wp_enqueue_style( 'ziaoba-fonts', 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap' );
     wp_enqueue_style( 'swiper-css', 'https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css' );
+    wp_enqueue_style( 'videojs-css', 'https://vjs.zencdn.net/8.10.0/video-js.css' );
     wp_enqueue_style( 'ziaoba-main-style', get_stylesheet_uri(), array(), $version );
 
     wp_enqueue_script( 'swiper-js', 'https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js', array(), '11.0.0', true );
     wp_enqueue_script( 'lucide-icons', 'https://unpkg.com/lucide@latest', array(), '1.0.0', true );
+    wp_enqueue_script( 'videojs-js', 'https://vjs.zencdn.net/8.10.0/video.min.js', array(), '8.10.0', true );
     wp_enqueue_script( 'ziaoba-main-js', get_template_directory_uri() . '/js/main.js', array('swiper-js', 'lucide-icons'), $version, true );
 
     wp_localize_script( 'ziaoba-main-js', 'ziaobaData', array(
@@ -52,81 +54,53 @@ function ziaoba_stream_scripts() {
 add_action( 'wp_enqueue_scripts', 'ziaoba_stream_scripts' );
 
 /**
- * Hide Ultimate Member Notices
+ * Helper: Safely get UM Core Page URL
  */
-add_filter( 'um_display_admin_notices', '__return_false' );
+function ziaoba_get_um_url( $page = 'login' ) {
+    if ( function_exists( 'um_get_core_page_url' ) ) {
+        $url = um_get_core_page_url( $page );
+        if ( $url ) return $url;
+    }
+    
+    // Fallbacks
+    switch ( $page ) {
+        case 'register':
+            return home_url( '/register/' );
+        case 'user':
+            return home_url( '/user/' );
+        case 'logout':
+            return wp_logout_url( home_url() );
+        default:
+            return home_url( '/login/' );
+    }
+}
 
 /**
- * Safe Redirect wp-login.php to UM Login Page
+ * Redirect wp-login.php to UM Login Page
  */
 function ziaoba_redirect_wp_login() {
     global $pagenow;
-    
-    // Only redirect wp-login.php
-    if ( 'wp-login.php' !== $pagenow ) {
-        return;
-    }
-
-    // Allow logout, lostpassword, and register actions if needed, but primary focus is login
-    $action = isset( $_GET['action'] ) ? $_GET['action'] : '';
-    if ( ! empty( $action ) && ! in_array( $action, array( 'login' ) ) ) {
-        return;
-    }
-
-    // Skip if it's a password reset link
-    if ( isset( $_GET['key'] ) || isset( $_GET['rp_key'] ) ) {
-        return;
-    }
-
-    // Check if UM is active
-    if ( function_exists( 'um_get_core_page_url' ) && is_plugin_active( 'ultimate-member/ultimate_member.php' ) ) {
-        $login_url = um_get_core_page_url('login');
-        
-        // Final fallback if UM returns wp-login.php or empty
-        if ( ! $login_url || strpos( $login_url, 'wp-login.php' ) !== false ) {
-            $login_url = home_url( '/login/' );
-        }
-
-        wp_redirect( $login_url );
+    // Only redirect if we are on wp-login.php, not in admin, and no specific action (like logout/lostpassword) is set
+    if ( 'wp-login.php' === $pagenow && ! is_admin() && ! isset( $_GET['action'] ) ) {
+        wp_redirect( ziaoba_get_um_url( 'login' ) );
         exit;
     }
 }
-add_action( 'init', 'ziaoba_redirect_wp_login' );
+add_action( 'init', 'ziaoba_redirect_wp_login', 9999 );
 
 /**
- * Safe login_url filter to point to /login
+ * Filter Login URL to point to UM Login Page
  */
-add_filter( 'login_url', function( $login_url, $redirect ) {
-    if ( function_exists( 'um_get_core_page_url' ) && is_plugin_active( 'ultimate-member/ultimate_member.php' ) ) {
-        $um_login = um_get_core_page_url( 'login' );
-        
-        // Ensure we don't return wp-login.php in a loop
-        if ( $um_login && strpos( $um_login, 'wp-login.php' ) === false ) {
-            return $um_login;
-        }
-        
-        // Fallback to hardcoded slug if UM setting is missing
-        return home_url( '/login/' );
+function ziaoba_custom_login_url( $login_url, $redirect, $force_reauth ) {
+    $custom_login_url = ziaoba_get_um_url( 'login' );
+    
+    if ( ! empty( $redirect ) ) {
+        $custom_login_url = add_query_arg( 'redirect_to', urlencode( $redirect ), $custom_login_url );
     }
-    return $login_url;
-}, 999, 2 );
-
-/**
- * Google Site Kit Social Button
- */
-function ziaoba_render_google_auth_button() {
-    $google_auth_url = add_query_arg( 'googlesitekit_login', '1', wp_login_url() );
-    ?>
-    <div class="ziaoba-social-auth-wrap">
-        <p class="social-divider"><span><?php _e( 'Or continue with', 'ziaoba-stream' ); ?></span></p>
-        <a href="<?php echo esc_url( $google_auth_url ); ?>" class="ziaoba-google-btn">
-            <img src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png" alt="Google Logo">
-            <span><?php _e( 'Sign in with Google', 'ziaoba-stream' ); ?></span>
-        </a>
-    </div>
-    <?php
+    
+    return $custom_login_url;
 }
-add_action( 'ziaoba_google_auth_button', 'ziaoba_render_google_auth_button' );
+add_filter( 'login_url', 'ziaoba_custom_login_url', 10, 3 );
 
 /**
  * Restrict Search to Entertainment and Education CPTs
@@ -140,10 +114,38 @@ function ziaoba_restrict_search_query( $query ) {
 add_action( 'pre_get_posts', 'ziaoba_restrict_search_query' );
 
 /**
+ * Add Google Sign-in to UM Forms
+ */
+function ziaoba_add_google_login_to_um() {
+    ?>
+    <div class="ziaoba-social-login">
+        <div class="ziaoba-separator">
+            <span>Or continue with</span>
+        </div>
+        <div class="ziaoba-social-buttons">
+            <a href="<?php echo esc_url( add_query_arg( 'action', 'google_login', ziaoba_get_um_url( 'login' ) ) ); ?>" class="btn-google">
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google Logo">
+                Sign in with Google
+            </a>
+        </div>
+    </div>
+    <?php
+}
+add_action( 'um_after_login_fields', 'ziaoba_add_google_login_to_um' );
+add_action( 'um_after_register_fields', 'ziaoba_add_google_login_to_um' );
+add_action( 'ziaoba_google_auth_button', 'ziaoba_add_google_login_to_um' );
+
+/**
  * Helpers
  */
 function ziaoba_get_hero_post() {
-    $posts = get_posts( array( 'post_type' => 'entertainment', 'posts_per_page' => 1, 'orderby' => 'rand', 'post_status' => 'publish', 'meta_key' => '_thumbnail_id' ) );
+    $posts = get_posts( array(
+        'post_type' => 'entertainment',
+        'posts_per_page' => 1,
+        'orderby' => 'rand',
+        'post_status' => 'publish',
+        'meta_key' => '_thumbnail_id'
+    ) );
     return !empty($posts) ? $posts[0] : null;
 }
 
