@@ -688,19 +688,26 @@ body.no-scroll { overflow: hidden; }
 
 .ziaoba-google-btn {
     width: 100%;
-    background: #E50914;
-    color: #fff;
-    border: 1px solid #E50914;
+    background: #fff;
+    color: #000;
+    border: 1px solid #ddd;
     min-height: 48px;
     font-size: 15px;
     border-radius: 6px;
     display: flex;
     align-items: center;
     justify-content: center;
+    gap: 12px;
+    font-weight: 600;
 }
 
 .ziaoba-google-btn:hover {
-    background: #c40812;
-    border-color: #c40812;
-    color: #fff;
+    background: #f9f9f9;
+    border-color: #ccc;
+    color: #000;
+}
+
+.ziaoba-google-btn img {
+    width: 20px;
+    height: 20px;
 }

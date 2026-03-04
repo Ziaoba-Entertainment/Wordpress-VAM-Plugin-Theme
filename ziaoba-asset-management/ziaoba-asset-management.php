@@ -104,29 +104,13 @@ add_action( 'init', 'ziaoba_ensure_um_settings' );
 
 /**
  * Google Site Kit Integration for UM
+ * 
+ * Deprecated: Google auth buttons are rendered by the active theme to avoid
+ * duplicate/non-functional buttons inside Ultimate Member forms.
  */
 function ziaoba_google_site_kit_um_button() {
-    // Prevent double rendering
-    static $rendered = false;
-    if ( $rendered ) return;
-    $rendered = true;
-
-    // We assume Site Kit is configured. 
-    // We render a button that points to the Google login action.
-    // Site Kit usually handles the 'google_login' action if configured for UM.
-    ?>
-    <div class="ziaoba-social-login">
-        <div class="ziaoba-separator">
-            <span>Or continue with</span>
-        </div>
-        <div class="ziaoba-social-buttons">
-            <a href="<?php echo esc_url( add_query_arg( 'action', 'google_login', home_url( '/login/' ) ) ); ?>" class="btn-google">
-                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
-                Sign in with Google
-            </a>
-        </div>
-    </div>
-    <?php
+    return;
 }
-add_action( 'um_after_login_fields', 'ziaoba_google_site_kit_um_button', 20 );
-add_action( 'um_after_register_fields', 'ziaoba_google_site_kit_um_button', 20 );
+// Hooks removed to prevent duplicate buttons
+// add_action( 'um_after_login_fields', 'ziaoba_google_site_kit_um_button', 20 );
+// add_action( 'um_after_register_fields', 'ziaoba_google_site_kit_um_button', 20 );

@@ -160,8 +160,8 @@ function ziaoba_get_google_auth_url() {
 
     return add_query_arg(
         array(
-            'googlesitekit_login' => '1',
-            'redirect_to'         => rawurlencode( $redirect_to ),
+            'googlesitekit_authenticate' => '1',
+            'redirect_to'                => rawurlencode( $redirect_to ),
         ),
         $wp_login_url
     );
@@ -171,17 +171,60 @@ function ziaoba_get_google_auth_url() {
  * Google Site Kit Social Button
  */
 function ziaoba_render_google_auth_button() {
-    $google_auth_url = ziaoba_get_google_auth_url();
+    $google_auth_url = add_query_arg(
+        array(
+            'googlesitekit_authenticate' => '1',
+            'redirect_to'                => rawurlencode( home_url( wp_unslash( $_SERVER['REQUEST_URI'] ?? '/' ) ) ),
+        ),
+        site_url( 'wp-login.php', 'login' )
+    );
     ?>
     <div class="ziaoba-social-auth-wrap">
-        <p class="social-divider"><span><?php esc_html_e( 'Or continue with', 'ziaoba-stream' ); ?></span></p>
+        <p class="social-divider"><span><?php _e( 'Or continue with', 'ziaoba-stream' ); ?></span></p>
         <a href="<?php echo esc_url( $google_auth_url ); ?>" class="ziaoba-google-btn">
-            <span><?php esc_html_e( 'Sign in with Google', 'ziaoba-stream' ); ?></span>
+            <img src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png" alt="Google Logo">
+            <span><?php _e( 'Sign in with Google', 'ziaoba-stream' ); ?></span>
         </a>
     </div>
     <?php
 }
 add_action( 'ziaoba_google_auth_button', 'ziaoba_render_google_auth_button' );
+
+/**
+ * Ensure Ultimate Member auth pages are fully compatible and registration is enabled.
+ */
+function ziaoba_um_auth_compatibility() {
+    if ( ! function_exists( 'shortcode_exists' ) || ! shortcode_exists( 'ultimatemember' ) ) {
+        return;
+    }
+
+    // Ensure canonical UM page assignment is present for fallback-safe routing.
+    if ( function_exists( 'UM' ) ) {
+        $um_options = get_option( 'um_options', array() );
+        $changed = false;
+
+        if ( empty( $um_options['core_login'] ) ) {
+            $page = get_page_by_path( 'login' );
+            if ( $page ) {
+                $um_options['core_login'] = $page->ID;
+                $changed = true;
+            }
+        }
+
+        if ( empty( $um_options['core_register'] ) ) {
+            $page = get_page_by_path( 'register' );
+            if ( $page ) {
+                $um_options['core_register'] = $page->ID;
+                $changed = true;
+            }
+        }
+
+        if ( $changed ) {
+            update_option( 'um_options', $um_options );
+        }
+    }
+}
+add_action( 'init', 'ziaoba_um_auth_compatibility', 20 );
 
 /**
  * Restrict Search to Entertainment and Education CPTs
