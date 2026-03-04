@@ -16,6 +16,7 @@ function ziaoba_player_shortcode( $atts ) {
 
     $post_id = $atts['id'];
     $video_url = get_post_meta( $post_id, '_ziaoba_video_url', true );
+    $poster_url = get_the_post_thumbnail_url( $post_id, 'full' );
 
     if ( ! $video_url ) {
         return '<div class="ziaoba-error">' . __( 'Video URL not found.', 'ziaoba' ) . '</div>';
@@ -34,6 +35,7 @@ function ziaoba_player_shortcode( $atts ) {
                class="video-js vjs-big-play-centered vjs-fluid vjs-16-9" 
                controls 
                preload="auto" 
+               poster="<?php echo esc_url( $poster_url ); ?>"
                data-setup='{"fluid": true, "aspectRatio": "16:9"}'>
             <source src="<?php echo esc_url( $video_url ); ?>" type="application/x-mpegURL">
             <p class="vjs-no-js">
