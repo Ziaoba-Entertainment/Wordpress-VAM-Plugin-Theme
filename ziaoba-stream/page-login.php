@@ -4,41 +4,58 @@
  */
 
 if ( is_user_logged_in() ) {
-    wp_redirect( home_url() );
+    wp_safe_redirect( home_url( '/' ) );
     exit;
 }
 
 get_header(); ?>
 
 <div class="auth-page-wrapper">
-    <div class="auth-container">
-        <div class="auth-header" style="margin-bottom: 28px;">
-            <h1 style="color: #fff; font-size: 32px; font-weight: 700; margin-bottom: 0;">Sign In</h1>
-        </div>
-
-        <div class="auth-content">
-            <?php 
-            // Try to get the UM login form ID from settings
-            $login_form_id = UM()->options()->get( 'core_login' );
-            if ( $login_form_id ) {
-                echo do_shortcode( '[ultimatemember form_id="' . $login_form_id . '"]' );
-            } else {
-                // Fallback to generic shortcode
-                echo do_shortcode( '[ultimatemember_login]' );
-            }
-            ?>
-        </div>
-
-        <div class="auth-footer" style="margin-top: 30px; border-top: 1px solid #333; padding-top: 20px;">
-            <?php do_action( 'ziaoba_google_auth_button' ); ?>
-
-            <div style="margin-top: 30px; color: #737373; font-size: 16px;">
-                New to Ziaoba? 
-                <a href="<?php echo ( function_exists('um_get_core_page_url') ) ? um_get_core_page_url('register') : wp_registration_url(); ?>" style="color: #fff; font-weight: 500;">
-                    Sign up now.
-                </a>
+    <div class="auth-shell">
+        <section class="auth-stage auth-stage-highlight">
+            <div class="auth-stage-panel">
+                <p class="auth-eyebrow"><?php esc_html_e( 'Welcome back', 'ziaoba-stream' ); ?></p>
+                <h1 class="auth-stage-title"><?php esc_html_e( 'Your next film night starts here.', 'ziaoba-stream' ); ?></h1>
+                <p class="auth-stage-copy"><?php esc_html_e( 'Sign in with email or Google, resume where you left off, and jump straight into your saved watchlist.', 'ziaoba-stream' ); ?></p>
+                <ul class="auth-benefits">
+                    <li><?php esc_html_e( 'Email-first sign in with remember-me support.', 'ziaoba-stream' ); ?></li>
+                    <li><?php esc_html_e( 'Google sign-in route that forwards through the active provider flow.', 'ziaoba-stream' ); ?></li>
+                    <li><?php esc_html_e( 'Cleaner mobile layout with larger tap targets and clearer hierarchy.', 'ziaoba-stream' ); ?></li>
+                </ul>
             </div>
-        </div>
+        </section>
+
+        <section class="auth-container auth-card auth-form-card">
+            <div class="auth-header">
+                <p class="auth-eyebrow"><?php esc_html_e( 'Sign in', 'ziaoba-stream' ); ?></p>
+                <h2 class="auth-title"><?php esc_html_e( 'Continue watching on any device', 'ziaoba-stream' ); ?></h2>
+                <p class="auth-copy"><?php esc_html_e( 'Use your email address or Google account. Your session can stay active on trusted devices.', 'ziaoba-stream' ); ?></p>
+            </div>
+
+            <div class="auth-content auth-enhanced-form" data-auth-mode="login">
+                <?php
+                if ( ziaoba_is_um_active() && function_exists( 'UM' ) ) {
+                    $login_form_id = UM()->options()->get( 'core_login' );
+                    echo do_shortcode( $login_form_id ? '[ultimatemember form_id="' . absint( $login_form_id ) . '"]' : '[ultimatemember_login]' );
+                } else {
+                    wp_login_form( array(
+                        'remember'       => true,
+                        'redirect'       => home_url( '/' ),
+                        'label_username' => __( 'Email Address', 'ziaoba-stream' ),
+                        'label_log_in'   => __( 'Sign In', 'ziaoba-stream' ),
+                    ) );
+                }
+                ?>
+            </div>
+
+            <div class="auth-footer auth-footer-inline">
+                <?php do_action( 'ziaoba_google_auth_button' ); ?>
+                <div class="auth-alt-link">
+                    <?php esc_html_e( 'New to Ziaoba?', 'ziaoba-stream' ); ?>
+                    <a href="<?php echo esc_url( ziaoba_get_auth_url( 'register' ) ); ?>"><?php esc_html_e( 'Create your account', 'ziaoba-stream' ); ?></a>
+                </div>
+            </div>
+        </section>
     </div>
 </div>
 
