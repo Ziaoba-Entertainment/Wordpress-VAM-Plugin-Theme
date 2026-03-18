@@ -57,21 +57,41 @@ add_action( 'admin_enqueue_scripts', 'ziaoba_vam_admin_scripts' );
  * Tracking Views via AJAX
  */
 add_action( 'wp_ajax_ziaoba_track_view', 'ziaoba_track_view_callback' );
-add_action( 'wp_ajax_nopriv_ziaoba_track_view', 'ziaoba_track_view_callback' );
 
 function ziaoba_track_view_callback() {
-    $post_id = isset( $_POST['post_id'] ) ? intval( $_POST['post_id'] ) : 0;
-    if ( $post_id ) {
-        $views = get_post_meta( $post_id, '_ziaoba_views', true ) ?: 0;
-        update_post_meta( $post_id, '_ziaoba_views', $views + 1 );
-        
-        // Log daily views
-        $today = date( 'Y-m-d' );
-        $log = get_post_meta( $post_id, '_ziaoba_views_log', true ) ?: array();
-        $log[$today] = ( isset( $log[$today] ) ? $log[$today] : 0 ) + 1;
-        update_post_meta( $post_id, '_ziaoba_views_log', $log );
+    if ( ! is_user_logged_in() ) {
+        wp_send_json_error( array( 'message' => __( 'Unauthorized.', 'ziaoba' ) ), 401 );
     }
-    wp_die();
+
+    if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_POST['nonce'] ) ), 'ziaoba_player_nonce' ) ) {
+        wp_send_json_error( array( 'message' => __( 'Invalid security token.', 'ziaoba' ) ), 403 );
+    }
+
+    $post_id = isset( $_POST['post_id'] ) ? intval( $_POST['post_id'] ) : 0;
+    if ( ! $post_id || ! in_array( get_post_type( $post_id ), array( 'entertainment', 'education' ), true ) ) {
+        wp_send_json_error( array( 'message' => __( 'Invalid content ID.', 'ziaoba' ) ), 400 );
+    }
+
+    $user_id     = get_current_user_id();
+    $tracked_key = 'ziaoba_view_tracked_' . $post_id;
+    if ( get_user_meta( $user_id, $tracked_key, true ) ) {
+        wp_send_json_success( array( 'views' => (int) get_post_meta( $post_id, '_ziaoba_views', true ) ) );
+    }
+
+    $views = (int) get_post_meta( $post_id, '_ziaoba_views', true );
+    update_post_meta( $post_id, '_ziaoba_views', $views + 1 );
+
+    $today = current_time( 'Y-m-d' );
+    $log   = get_post_meta( $post_id, '_ziaoba_views_log', true );
+    if ( ! is_array( $log ) ) {
+        $log = array();
+    }
+    $log[ $today ] = isset( $log[ $today ] ) ? (int) $log[ $today ] + 1 : 1;
+    update_post_meta( $post_id, '_ziaoba_views_log', $log );
+
+    update_user_meta( $user_id, $tracked_key, current_time( 'mysql', true ) );
+
+    wp_send_json_success( array( 'views' => $views + 1 ) );
 }
 
 /**
