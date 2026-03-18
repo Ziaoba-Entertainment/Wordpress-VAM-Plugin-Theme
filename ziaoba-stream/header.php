@@ -7,12 +7,12 @@
 </head>
 <body <?php body_class(); ?>>
     <?php wp_body_open(); ?>
-    
+
     <header class="site-header" id="mainHeader">
         <div class="container">
             <div class="nav-inner">
                 <div class="logo-wrap">
-                    <?php 
+                    <?php
                     if ( has_custom_logo() ) {
                         the_custom_logo();
                     } else {
@@ -20,8 +20,8 @@
                     }
                     ?>
                 </div>
-                
-                <nav class="nav-menu">
+
+                <nav class="nav-menu" aria-label="<?php esc_attr_e( 'Primary navigation', 'ziaoba-stream' ); ?>">
                     <?php
                     wp_nav_menu( array(
                         'theme_location' => 'primary',
@@ -33,52 +33,35 @@
 
                 <div class="nav-actions">
                     <div class="search-wrap">
-                        <i data-lucide="search" id="searchToggle"></i>
+                        <button type="button" class="icon-button" id="searchToggle" aria-expanded="false" aria-controls="searchForm">
+                            <i data-lucide="search"></i>
+                        </button>
                         <form role="search" method="get" class="search-form" id="searchForm" action="<?php echo esc_url( home_url( '/' ) ); ?>">
-                            <input type="search" class="search-field" placeholder="<?php echo esc_attr_x( 'Search movies, shows...', 'placeholder', 'ziaoba-stream' ); ?>" value="<?php echo get_search_query(); ?>" name="s" />
+                            <input type="search" class="search-field" placeholder="<?php echo esc_attr_x( 'Search movies, shows, and lessons...', 'placeholder', 'ziaoba-stream' ); ?>" value="<?php echo esc_attr( get_search_query() ); ?>" name="s" />
                             <button type="submit" class="search-submit"><i data-lucide="arrow-right"></i></button>
                         </form>
                     </div>
-                    
+
                     <?php if ( is_user_logged_in() ) : ?>
                         <div class="user-nav-wrap">
-                            <?php 
-                            $um_active = function_exists( 'um_get_core_page_url' ) && is_plugin_active( 'ultimate-member/ultimate_member.php' );
-                            $profile_url = $um_active ? um_get_core_page_url('user') : get_author_posts_url( get_current_user_id() );
-                            $logout_url = $um_active ? um_get_core_page_url('logout') : wp_logout_url( home_url() );
-                            ?>
+                            <?php $profile_url = ziaoba_get_auth_url( 'user' ); ?>
                             <a href="<?php echo esc_url( $profile_url ); ?>" class="user-avatar-link">
-                                <?php 
-                                if ( $um_active && function_exists( 'um_get_user_avatar_url' ) ) {
-                                    echo '<img src="' . esc_url( um_get_user_avatar_url( get_current_user_id(), 32 ) ) . '" alt="Avatar">';
+                                <?php
+                                if ( ziaoba_is_um_active() && function_exists( 'um_get_user_avatar_url' ) ) {
+                                    echo '<img src="' . esc_url( um_get_user_avatar_url( get_current_user_id(), 32 ) ) . '" alt="' . esc_attr__( 'Profile avatar', 'ziaoba-stream' ) . '">';
                                 } else {
                                     echo '<i data-lucide="user"></i>';
                                 }
                                 ?>
                             </a>
-                            <a href="<?php echo esc_url( $logout_url ); ?>" title="Logout">
+                            <a href="<?php echo esc_url( ziaoba_get_auth_url( 'logout' ) ); ?>" title="<?php esc_attr_e( 'Logout', 'ziaoba-stream' ); ?>">
                                 <i data-lucide="log-out"></i>
                             </a>
                         </div>
                     <?php else : ?>
                         <div class="auth-links">
-                            <?php 
-                            $um_active = function_exists( 'um_get_core_page_url' ) && is_plugin_active( 'ultimate-member/ultimate_member.php' );
-                            
-                            // Explicitly target /login and /register slugs for UM compatibility
-                            $login_url = $um_active ? um_get_core_page_url('login') : wp_login_url();
-                            $register_url = $um_active ? um_get_core_page_url('register') : wp_registration_url();
-
-                            // Fallback if UM returns wp-login.php
-                            if ( $um_active && ( ! $login_url || strpos( $login_url, 'wp-login.php' ) !== false ) ) {
-                                $login_url = home_url( '/login/' );
-                            }
-                            if ( $um_active && ( ! $register_url || strpos( $register_url, 'wp-login.php' ) !== false ) ) {
-                                $register_url = home_url( '/register/' );
-                            }
-                            ?>
-                            <a href="<?php echo esc_url( $login_url ); ?>" class="login-link">Login</a>
-                            <a href="<?php echo esc_url( $register_url ); ?>" class="btn btn-primary btn-sm">Register</a>
+                            <a href="<?php echo esc_url( ziaoba_get_auth_url( 'login' ) ); ?>" class="login-link"><?php esc_html_e( 'Login', 'ziaoba-stream' ); ?></a>
+                            <a href="<?php echo esc_url( ziaoba_get_auth_url( 'register' ) ); ?>" class="btn btn-primary btn-sm"><?php esc_html_e( 'Register', 'ziaoba-stream' ); ?></a>
                         </div>
                     <?php endif; ?>
                 </div>
