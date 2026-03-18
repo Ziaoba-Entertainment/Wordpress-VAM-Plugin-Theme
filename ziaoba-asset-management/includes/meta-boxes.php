@@ -29,6 +29,12 @@ function ziaoba_video_meta_callback( $post ) {
     $rating    = get_post_meta( $post->ID, '_ziaoba_age_rating', true );
     $views     = get_post_meta( $post->ID, '_ziaoba_views', true ) ?: 0;
     
+    // TMDB Data
+    $tmdb_id   = get_post_meta( $post->ID, '_ziaoba_tmdb_id', true );
+    $tmdb_type = get_post_meta( $post->ID, '_ziaoba_tmdb_type', true );
+    $release   = get_post_meta( $post->ID, '_ziaoba_release_date', true );
+    $backdrop  = get_post_meta( $post->ID, '_ziaoba_backdrop_url', true );
+
     // Education specific
     $topic = get_post_meta( $post->ID, '_ziaoba_lesson_topic', true );
     $related = get_post_meta( $post->ID, '_ziaoba_related_content', true );
@@ -44,10 +50,27 @@ function ziaoba_video_meta_callback( $post ) {
             <input type="text" name="ziaoba_duration" value="<?php echo esc_attr( $duration ); ?>" style="width: 100%;" placeholder="1h 45m or 15m">
         </div>
         <div>
-            <label style="display: block; margin-bottom: 5px; font-weight: bold;"><?php _e( 'Age Rating', 'ziaoba' ); ?></label>
+            <label style="display: block; margin-bottom: 5px; font-weight: bold;"><?php _e( 'Age Rating / TMDB Vote', 'ziaoba' ); ?></label>
             <input type="text" name="ziaoba_age_rating" value="<?php echo esc_attr( $rating ); ?>" style="width: 100%;" placeholder="13+ or PG">
         </div>
     </div>
+
+    <div style="border-top: 1px solid #eee; padding-top: 15px; margin-top: 15px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 15px;">
+        <div>
+            <label style="display: block; margin-bottom: 5px; font-weight: bold;"><?php _e( 'TMDB ID', 'ziaoba' ); ?></label>
+            <input type="text" name="ziaoba_tmdb_id" value="<?php echo esc_attr( $tmdb_id ); ?>" style="width: 100%;" readonly>
+        </div>
+        <div>
+            <label style="display: block; margin-bottom: 5px; font-weight: bold;"><?php _e( 'Release Date', 'ziaoba' ); ?></label>
+            <input type="text" name="ziaoba_release_date" value="<?php echo esc_attr( $release ); ?>" style="width: 100%;">
+        </div>
+    </div>
+
+    <div style="margin-bottom: 15px;">
+        <label style="display: block; margin-bottom: 5px; font-weight: bold;"><?php _e( 'Backdrop URL', 'ziaoba' ); ?></label>
+        <input type="text" name="ziaoba_backdrop_url" value="<?php echo esc_attr( $backdrop ); ?>" style="width: 100%;">
+    </div>
+
     <div style="margin-bottom: 15px;">
         <label style="display: block; margin-bottom: 5px; font-weight: bold;"><?php _e( 'Total Views (Read-only)', 'ziaoba' ); ?></label>
         <input type="text" value="<?php echo esc_attr( $views ); ?>" style="width: 100%; background: #f0f0f1;" readonly>
@@ -84,6 +107,9 @@ function ziaoba_save_video_meta( $post_id ) {
         'ziaoba_age_rating'     => '_ziaoba_age_rating',
         'ziaoba_lesson_topic'   => '_ziaoba_lesson_topic',
         'ziaoba_related_content' => '_ziaoba_related_content',
+        'ziaoba_tmdb_id'        => '_ziaoba_tmdb_id',
+        'ziaoba_release_date'   => '_ziaoba_release_date',
+        'ziaoba_backdrop_url'   => '_ziaoba_backdrop_url',
     );
 
     foreach ( $fields as $key => $meta_key ) {

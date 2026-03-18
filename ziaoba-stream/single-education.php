@@ -20,8 +20,13 @@ get_header(); ?>
                                     <h2>Login Required</h2>
                                     <p>Join Ziaoba to access this lesson and build your future.</p>
                                     <div class="login-required-actions">
-                                        <a href="<?php echo esc_url( ziaoba_get_um_url( 'login' ) ); ?>" class="btn btn-primary">Login to Learn</a>
-                                        <a href="<?php echo esc_url( ziaoba_get_um_url( 'register' ) ); ?>" class="btn btn-outline">Register</a>
+                                        <?php 
+                                        $um_active = function_exists( 'um_get_core_page_url' ) && is_plugin_active( 'ultimate-member/ultimate_member.php' );
+                                        $login_url = $um_active ? um_get_core_page_url('login') : wp_login_url();
+                                        $register_url = $um_active ? um_get_core_page_url('register') : wp_registration_url();
+                                        ?>
+                                        <a href="<?php echo esc_url( $login_url ); ?>" class="btn btn-primary">Login to Learn</a>
+                                        <a href="<?php echo esc_url( $register_url ); ?>" class="btn btn-outline">Register</a>
                                     </div>
                                     <?php do_action( 'ziaoba_google_auth_button' ); ?>
                                 </div>
@@ -47,11 +52,7 @@ get_header(); ?>
                             if ( $related ) :
                         ?>
                             <div class="related-card" onclick="location.href='<?php echo get_permalink($related->ID); ?>'" style="cursor: pointer;">
-                                <?php if ( has_post_thumbnail( $related->ID ) ) : ?>
-                                    <?php echo get_the_post_thumbnail( $related->ID, 'medium', array( 'style' => 'width: 100%; border-radius: 8px; margin-bottom: 10px;', 'loading' => 'lazy' ) ); ?>
-                                <?php else : ?>
-                                    <img src="https://picsum.photos/seed/rel-<?php echo $related->ID; ?>/400/225" style="width: 100%; border-radius: 8px; margin-bottom: 10px;" loading="lazy">
-                                <?php endif; ?>
+                                <img src="<?php echo get_the_post_thumbnail_url($related->ID, 'medium'); ?>" style="width: 100%; border-radius: 4px; margin-bottom: 10px;">
                                 <h4 style="font-size: 14px;"><?php echo esc_html($related->post_title); ?></h4>
                             </div>
                         <?php endif; endif; ?>

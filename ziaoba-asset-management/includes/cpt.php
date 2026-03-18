@@ -90,17 +90,4 @@ function ziaoba_register_cpts() {
         'taxonomies'         => array( 'genre' ),
         'show_in_rest'       => true,
     ) );
-
-    // Register Meta for Entertainment
-    register_post_meta( 'entertainment', '_ziaoba_season', array(
-        'show_in_rest' => true,
-        'single'       => true,
-        'type'         => 'string',
-    ) );
-
-    register_post_meta( 'entertainment', '_ziaoba_episode_number', array(
-        'show_in_rest' => true,
-        'single'       => true,
-        'type'         => 'integer',
-    ) );
 }

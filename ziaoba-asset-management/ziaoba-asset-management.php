@@ -23,6 +23,11 @@ require_once ZIAOBA_VAM_PATH . 'includes/meta-boxes.php';
 require_once ZIAOBA_VAM_PATH . 'includes/shortcodes.php';
 require_once ZIAOBA_VAM_PATH . 'includes/player.php';
 require_once ZIAOBA_VAM_PATH . 'includes/dashboard.php';
+require_once ZIAOBA_VAM_PATH . 'includes/class-tmdb-api.php';
+require_once ZIAOBA_VAM_PATH . 'admin/class-tmdb-search-ui.php';
+
+// Initialize TMDB Search UI
+new Ziaoba_TMDB_Search_UI();
 
 /**
  * Fix Ultimate Member notice: Register dummy 'um_crop' script if UM active
@@ -75,42 +80,5 @@ function ziaoba_track_view_callback() {
 register_activation_hook( __FILE__, 'ziaoba_vam_activate' );
 function ziaoba_vam_activate() {
     ziaoba_register_cpts();
-    
-    // Untick "Anyone can register" to force UM registration
-    update_option( 'users_can_register', 0 );
-    
-    // Set UM Default Forms via options
-    if ( function_exists( 'UM' ) ) {
-        $um_options = get_option( 'um_options', array() );
-        $um_options['default_login_form'] = 68;
-        $um_options['default_register_form'] = 67;
-        update_option( 'um_options', $um_options );
-    }
-
     flush_rewrite_rules();
 }
-
-/**
- * Ensure UM settings are correct on init as well
- */
-function ziaoba_ensure_um_settings() {
-    if ( ! is_admin() ) return;
-    
-    if ( get_option( 'users_can_register' ) != 0 ) {
-        update_option( 'users_can_register', 0 );
-    }
-}
-add_action( 'init', 'ziaoba_ensure_um_settings' );
-
-/**
- * Google Site Kit Integration for UM
- * 
- * Deprecated: Google auth buttons are rendered by the active theme to avoid
- * duplicate/non-functional buttons inside Ultimate Member forms.
- */
-function ziaoba_google_site_kit_um_button() {
-    return;
-}
-// Hooks removed to prevent duplicate buttons
-// add_action( 'um_after_login_fields', 'ziaoba_google_site_kit_um_button', 20 );
-// add_action( 'um_after_register_fields', 'ziaoba_google_site_kit_um_button', 20 );
