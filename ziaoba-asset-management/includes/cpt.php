@@ -10,19 +10,18 @@ if ( ! defined( 'ABSPATH' ) ) {
 add_action( 'init', 'ziaoba_register_cpts', 0 );
 
 function ziaoba_register_cpts() {
-    // Genre Taxonomy
     register_taxonomy( 'genre', array( 'entertainment', 'education' ), array(
         'hierarchical'      => true,
         'labels'            => array(
             'name'              => _x( 'Genres', 'taxonomy general name' ),
             'singular_name'     => _x( 'Genre', 'taxonomy singular name' ),
-            'search_items'      => __( 'Search Genres' ),
-            'all_items'         => __( 'All Genres' ),
-            'edit_item'         => __( 'Edit Genre' ),
-            'update_item'       => __( 'Update Genre' ),
-            'add_new_item'      => __( 'Add New Genre' ),
-            'new_item_name'     => __( 'New Genre Name' ),
-            'menu_name'         => __( 'Genres' ),
+            'search_items'      => __( 'Search Genres', 'ziaoba' ),
+            'all_items'         => __( 'All Genres', 'ziaoba' ),
+            'edit_item'         => __( 'Edit Genre', 'ziaoba' ),
+            'update_item'       => __( 'Update Genre', 'ziaoba' ),
+            'add_new_item'      => __( 'Add New Genre', 'ziaoba' ),
+            'new_item_name'     => __( 'New Genre Name', 'ziaoba' ),
+            'menu_name'         => __( 'Genres', 'ziaoba' ),
         ),
         'show_ui'           => true,
         'show_admin_column' => true,
@@ -31,19 +30,18 @@ function ziaoba_register_cpts() {
         'show_in_rest'      => true,
     ) );
 
-    // Entertainment CPT
     register_post_type( 'entertainment', array(
         'labels'             => array(
-            'name'               => _x( 'Entertainment', 'post type general name' ),
-            'singular_name'      => _x( 'Entertainment', 'post type singular name' ),
-            'menu_name'          => _x( 'Entertainment', 'admin menu' ),
-            'add_new'            => _x( 'Add New', 'entertainment' ),
-            'add_new_item'       => __( 'Add New Entertainment' ),
-            'edit_item'          => __( 'Edit Entertainment' ),
-            'view_item'          => __( 'View Entertainment' ),
-            'all_items'          => __( 'All Entertainment' ),
-            'search_items'       => __( 'Search Entertainment' ),
-            'not_found'          => __( 'No entertainment found.' ),
+            'name'               => _x( 'Entertainment', 'post type general name', 'ziaoba' ),
+            'singular_name'      => _x( 'Entertainment', 'post type singular name', 'ziaoba' ),
+            'menu_name'          => _x( 'Entertainment', 'admin menu', 'ziaoba' ),
+            'add_new'            => _x( 'Add New', 'entertainment', 'ziaoba' ),
+            'add_new_item'       => __( 'Add New Entertainment', 'ziaoba' ),
+            'edit_item'          => __( 'Edit Entertainment', 'ziaoba' ),
+            'view_item'          => __( 'View Entertainment', 'ziaoba' ),
+            'all_items'          => __( 'All Entertainment', 'ziaoba' ),
+            'search_items'       => __( 'Search Entertainment', 'ziaoba' ),
+            'not_found'          => __( 'No entertainment found.', 'ziaoba' ),
         ),
         'public'             => true,
         'publicly_queryable' => true,
@@ -61,19 +59,18 @@ function ziaoba_register_cpts() {
         'show_in_rest'       => true,
     ) );
 
-    // Education CPT
     register_post_type( 'education', array(
         'labels'             => array(
-            'name'               => _x( 'Education', 'post type general name' ),
-            'singular_name'      => _x( 'Education', 'post type singular name' ),
-            'menu_name'          => _x( 'Education', 'admin menu' ),
-            'add_new'            => _x( 'Add New', 'education' ),
-            'add_new_item'       => __( 'Add New Education' ),
-            'edit_item'          => __( 'Edit Education' ),
-            'view_item'          => __( 'View Education' ),
-            'all_items'          => __( 'All Education' ),
-            'search_items'       => __( 'Search Education' ),
-            'not_found'          => __( 'No education found.' ),
+            'name'               => _x( 'Education', 'post type general name', 'ziaoba' ),
+            'singular_name'      => _x( 'Education', 'post type singular name', 'ziaoba' ),
+            'menu_name'          => _x( 'Education', 'admin menu', 'ziaoba' ),
+            'add_new'            => _x( 'Add New', 'education', 'ziaoba' ),
+            'add_new_item'       => __( 'Add New Education', 'ziaoba' ),
+            'edit_item'          => __( 'Edit Education', 'ziaoba' ),
+            'view_item'          => __( 'View Education', 'ziaoba' ),
+            'all_items'          => __( 'All Education', 'ziaoba' ),
+            'search_items'       => __( 'Search Education', 'ziaoba' ),
+            'not_found'          => __( 'No education found.', 'ziaoba' ),
         ),
         'public'             => true,
         'publicly_queryable' => true,
@@ -90,4 +87,38 @@ function ziaoba_register_cpts() {
         'taxonomies'         => array( 'genre' ),
         'show_in_rest'       => true,
     ) );
+
+    $meta_fields = array(
+        '_ziaoba_season'            => 'string',
+        '_ziaoba_episode_number'    => 'integer',
+        '_ziaoba_total_seasons'     => 'integer',
+        '_ziaoba_total_episodes'    => 'integer',
+        '_ziaoba_content_type'      => 'string',
+        '_ziaoba_tmdb_vote_average' => 'number',
+        '_ziaoba_tmdb_vote_count'   => 'integer',
+        '_ziaoba_original_title'    => 'string',
+        '_ziaoba_tagline'           => 'string',
+        '_ziaoba_status'            => 'string',
+        '_ziaoba_original_language' => 'string',
+        '_ziaoba_networks'          => 'string',
+        '_ziaoba_origin_countries'  => 'string',
+        '_ziaoba_trailer_url'       => 'string',
+        '_ziaoba_poster_url'        => 'string',
+        '_ziaoba_tmdb_last_sync'    => 'string',
+        '_ziaoba_related_content'   => 'string',
+    );
+
+    foreach ( $meta_fields as $meta_key => $type ) {
+        register_post_meta( 'entertainment', $meta_key, array(
+            'show_in_rest' => true,
+            'single'       => true,
+            'type'         => $type,
+        ) );
+
+        register_post_meta( 'education', $meta_key, array(
+            'show_in_rest' => true,
+            'single'       => true,
+            'type'         => $type,
+        ) );
+    }
 }
