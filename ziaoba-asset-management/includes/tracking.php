@@ -3,17 +3,30 @@
  * View Tracking Logic
  */
 
+namespace Ziaoba\VAM;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-add_action( 'wp_ajax_ziaoba_track_view', 'ziaoba_track_view_callback' );
-add_action( 'wp_ajax_nopriv_ziaoba_track_view', 'ziaoba_track_view_callback' );
+class Tracking {
 
-if ( ! function_exists( 'ziaoba_track_view_callback' ) ) {
-    function ziaoba_track_view_callback() {
+    /**
+     * Initialize Tracking
+     */
+    public static function init() {
+        $instance = new self();
+        add_action( 'wp_ajax_ziaoba_track_view', array( $instance, 'track_view_callback' ) );
+        add_action( 'wp_ajax_nopriv_ziaoba_track_view', array( $instance, 'track_view_callback' ) );
+    }
+
+    /**
+     * AJAX Callback for tracking views
+     */
+    public function track_view_callback() {
         // 1. Security Check: Nonce
-        if ( ! isset( $_POST['nonce'] ) || ! wp_verify_nonce( $_POST['nonce'], 'ziaoba_player_nonce' ) ) {
+        $nonce = isset( $_POST['nonce'] ) ? sanitize_text_field( $_POST['nonce'] ) : '';
+        if ( ! wp_verify_nonce( $nonce, 'ziaoba_player_nonce' ) ) {
             wp_send_json_error( 'Invalid security token.', 403 );
         }
 
@@ -23,7 +36,7 @@ if ( ! function_exists( 'ziaoba_track_view_callback' ) ) {
             wp_send_json_error( 'Invalid content ID.', 400 );
         }
 
-        // 3. Rate Limiting (Simple Cookie-based for demo, could be IP-based)
+        // 3. Rate Limiting (Simple Cookie-based)
         $cookie_name = 'ziaoba_viewed_' . $post_id;
         if ( isset( $_COOKIE[$cookie_name] ) ) {
             wp_send_json_error( 'View already recorded.', 429 );
@@ -48,7 +61,7 @@ if ( ! function_exists( 'ziaoba_track_view_callback' ) ) {
 
         // Keep only last 90 days of logs to prevent meta bloat
         if ( count( $log ) > 90 ) {
-            asort( $log );
+            ksort( $log ); // Sort by date
             $log = array_slice( $log, -90, null, true );
         }
 

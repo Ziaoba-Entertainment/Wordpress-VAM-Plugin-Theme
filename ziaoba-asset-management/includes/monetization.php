@@ -3,29 +3,46 @@
  * Monetization Settings Page
  */
 
+namespace Ziaoba\VAM;
+
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-add_action( 'admin_menu', 'ziaoba_monetization_menu' );
+class Monetization {
 
-if ( ! function_exists( 'ziaoba_monetization_menu' ) ) {
-    function ziaoba_monetization_menu() {
+    /**
+     * Initialize Monetization
+     */
+    public static function init() {
+        $instance = new self();
+        add_action( 'admin_menu', array( $instance, 'add_menu_page' ) );
+    }
+
+    /**
+     * Add Options Page
+     */
+    public function add_menu_page() {
         add_options_page(
-            'Ziaoba Monetization',
-            'Ziaoba Monetization',
+            __( 'Ziaoba Monetization', 'ziaoba' ),
+            __( 'Ziaoba Monetization', 'ziaoba' ),
             'manage_options',
             'ziaoba-monetization',
-            'ziaoba_monetization_page_callback'
+            array( $this, 'render_page' )
         );
     }
-}
 
-if ( ! function_exists( 'ziaoba_monetization_page_callback' ) ) {
-    function ziaoba_monetization_page_callback() {
+    /**
+     * Render Monetization Page
+     */
+    public function render_page() {
         if ( isset( $_POST['ziaoba_save_monetization'] ) ) {
             check_admin_referer( 'ziaoba_monetization_action', 'ziaoba_monetization_nonce' );
             
+            if ( ! current_user_can( 'manage_options' ) ) {
+                wp_die( __( 'Unauthorized access', 'ziaoba' ) );
+            }
+
             $settings = array(
                 'flussonic_url'    => esc_url_raw( $_POST['flussonic_url'] ),
                 'flussonic_token'  => sanitize_text_field( $_POST['flussonic_token'] ),
@@ -38,6 +55,8 @@ if ( ! function_exists( 'ziaoba_monetization_page_callback' ) ) {
                 'sponsor_logo'     => esc_url_raw( $_POST['sponsor_logo'] ),
                 'sponsor_url'      => esc_url_raw( $_POST['sponsor_url'] ),
                 'sponsor_enable'   => isset( $_POST['sponsor_enable'] ) ? '1' : '0',
+                
+                'tmdb_api_key'     => sanitize_text_field( $_POST['tmdb_api_key'] ),
             );
             
             update_option( 'ziaoba_monetization_settings', $settings );
@@ -57,11 +76,11 @@ if ( ! function_exists( 'ziaoba_monetization_page_callback' ) ) {
                     <a href="#flussonic" class="nav-tab nav-tab-active" data-tab="flussonic"><?php _e( 'Flussonic SSAI', 'ziaoba' ); ?></a>
                     <a href="#gam" class="nav-tab" data-tab="gam"><?php _e( 'Google Ad Manager', 'ziaoba' ); ?></a>
                     <a href="#sponsors" class="nav-tab" data-tab="sponsors"><?php _e( 'Sponsor Packages', 'ziaoba' ); ?></a>
+                    <a href="#tmdb" class="nav-tab" data-tab="tmdb"><?php _e( 'TMDB API', 'ziaoba' ); ?></a>
                     <a href="#metrics" class="nav-tab" data-tab="metrics"><?php _e( 'Ad Metrics', 'ziaoba' ); ?></a>
                 </nav>
 
                 <div id="flussonic-tab" class="tab-content active-tab" style="background: #fff; padding: 20px; border: 1px solid #ccc; border-top: none;">
-                    <!-- ... existing flussonic content ... -->
                     <h2><?php _e( 'Server-Side Ad Insertion (SSAI)', 'ziaoba' ); ?></h2>
                     <p class="description"><?php _e( 'Configure Flussonic SSAI to stitch ads directly into the HLS stream for better ad-block resilience.', 'ziaoba' ); ?></p>
                     <table class="form-table">
@@ -145,22 +164,62 @@ if ( ! function_exists( 'ziaoba_monetization_page_callback' ) ) {
                     </table>
                 </div>
 
+                <div id="tmdb-tab" class="tab-content" style="display:none; background: #fff; padding: 20px; border: 1px solid #ccc; border-top: none;">
+                    <h2><?php _e( 'TMDB API Integration', 'ziaoba' ); ?></h2>
+                    <p class="description"><?php _e( 'Configure your TMDB API key to enable automated content ingestion for movies and series.', 'ziaoba' ); ?></p>
+                    <table class="form-table">
+                        <tr>
+                            <th scope="row"><?php _e( 'TMDB API Key (v3)', 'ziaoba' ); ?></th>
+                            <td>
+                                <input type="password" name="tmdb_api_key" value="<?php echo esc_attr( $settings['tmdb_api_key'] ?? '' ); ?>" class="regular-text">
+                                <p class="description"><?php _e( 'Get your API key from <a href="https://www.themoviedb.org/settings/api" target="_blank">TMDB Settings</a>.', 'ziaoba' ); ?></p>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+
                 <div id="metrics-tab" class="tab-content" style="display:none; background: #fff; padding: 20px; border: 1px solid #ccc; border-top: none;">
                     <h2><?php _e( 'Ad Performance Metrics', 'ziaoba' ); ?></h2>
                     <p class="description"><?php _e( 'Real-time tracking of ad impressions and estimated revenue across all platforms.', 'ziaoba' ); ?></p>
                     
+                    <?php
+                    // Aggregate total views across all content types
+                    $total_views = 0;
+                    $content_types = array( 'entertainment', 'education', 'episode' );
+                    foreach ( $content_types as $type ) {
+                        $query = new \WP_Query( array(
+                            'post_type'      => $type,
+                            'posts_per_page' => -1,
+                            'fields'         => 'ids',
+                        ) );
+                        if ( $query->have_posts() ) {
+                            foreach ( $query->posts as $id ) {
+                                $total_views += (int) get_post_meta( $id, '_ziaoba_views', true );
+                            }
+                        }
+                    }
+
+                    // Mock some realistic data based on views
+                    $cpm = 45.00; // ZAR
+                    $revenue = ( $total_views / 1000 ) * $cpm;
+                    
+                    // Distribution (Mocked for now)
+                    $gam_views = round( $total_views * 0.68 );
+                    $ssai_views = round( $total_views * 0.26 );
+                    $sponsor_views = $total_views - $gam_views - $ssai_views;
+                    ?>
                     <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin: 20px 0;">
                         <div style="background: #f9f9f9; padding: 20px; border: 1px solid #eee; border-radius: 4px; text-align: center;">
                             <span style="display: block; font-size: 12px; color: #666; text-transform: uppercase;"><?php _e( 'Total Ad Views', 'ziaoba' ); ?></span>
-                            <span style="font-size: 24px; font-weight: 700; color: #E50914;">124,500</span>
+                            <span style="font-size: 24px; font-weight: 700; color: #E50914;"><?php echo number_format( $total_views ); ?></span>
                         </div>
                         <div style="background: #f9f9f9; padding: 20px; border: 1px solid #eee; border-radius: 4px; text-align: center;">
                             <span style="display: block; font-size: 12px; color: #666; text-transform: uppercase;"><?php _e( 'Avg. CPM (ZAR)', 'ziaoba' ); ?></span>
-                            <span style="font-size: 24px; font-weight: 700; color: #00C853;">R 45.00</span>
+                            <span style="font-size: 24px; font-weight: 700; color: #00C853;">R <?php echo number_format( $cpm, 2 ); ?></span>
                         </div>
                         <div style="background: #f9f9f9; padding: 20px; border: 1px solid #eee; border-radius: 4px; text-align: center;">
                             <span style="display: block; font-size: 12px; color: #666; text-transform: uppercase;"><?php _e( 'Est. Revenue', 'ziaoba' ); ?></span>
-                            <span style="font-size: 24px; font-weight: 700; color: #2196F3;">R 5,602.50</span>
+                            <span style="font-size: 24px; font-weight: 700; color: #2196F3;">R <?php echo number_format( $revenue, 2 ); ?></span>
                         </div>
                     </div>
 
@@ -176,21 +235,21 @@ if ( ! function_exists( 'ziaoba_monetization_page_callback' ) ) {
                         <tbody>
                             <tr>
                                 <td><strong>Google Ad Manager</strong></td>
-                                <td>85,000</td>
+                                <td><?php echo number_format( $gam_views ); ?></td>
                                 <td>92%</td>
-                                <td>R 3,825.00</td>
+                                <td>R <?php echo number_format( ( $gam_views / 1000 ) * $cpm, 2 ); ?></td>
                             </tr>
                             <tr>
                                 <td><strong>Flussonic SSAI</strong></td>
-                                <td>32,000</td>
+                                <td><?php echo number_format( $ssai_views ); ?></td>
                                 <td>98%</td>
-                                <td>R 1,440.00</td>
+                                <td>R <?php echo number_format( ( $ssai_views / 1000 ) * $cpm, 2 ); ?></td>
                             </tr>
                             <tr>
                                 <td><strong>Direct Sponsors</strong></td>
-                                <td>7,500</td>
+                                <td><?php echo number_format( $sponsor_views ); ?></td>
                                 <td>100%</td>
-                                <td>R 337.50</td>
+                                <td>R <?php echo number_format( ( $sponsor_views / 1000 ) * $cpm, 2 ); ?></td>
                             </tr>
                         </tbody>
                     </table>
