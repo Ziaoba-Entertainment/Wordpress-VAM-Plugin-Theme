@@ -194,3 +194,13 @@ function ziaoba_get_content_meta( $post_id, $key ) {
     }
     return $value;
 }
+
+/**
+ * Get User Age from DOB
+ */
+function ziaoba_get_user_age( $user_id = 0 ) {
+    if ( class_exists( 'Ziaoba\VAM\AgeRestriction' ) ) {
+        return Ziaoba\VAM\AgeRestriction::get_user_age( $user_id );
+    }
+    return 0;
+}
