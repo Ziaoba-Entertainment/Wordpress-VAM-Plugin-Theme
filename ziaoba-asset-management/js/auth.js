@@ -128,7 +128,8 @@
                     nonce: ziaobaAuth.nonce,
                     username: $form.find('input[name="username"]').val(),
                     email: $form.find('input[name="email"]').val(),
-                    password: $form.find('input[name="password"]').val()
+                    password: $form.find('input[name="password"]').val(),
+                    dob: $form.find('input[name="dob"]').val()
                 },
                 success: function(response) {
                     if (response.success) {

@@ -103,6 +103,11 @@ class Auth {
                             <input type="password" name="password" id="reg-password" placeholder=" " required>
                             <label for="reg-password"><?php _e( 'Password', 'ziaoba-asset-management' ); ?></label>
                         </div>
+
+                        <div class="ziaoba-input-group">
+                            <input type="date" name="dob" id="reg-dob" placeholder=" " required max="<?php echo date('Y-m-d'); ?>">
+                            <label for="reg-dob"><?php _e( 'Date of Birth', 'ziaoba-asset-management' ); ?></label>
+                        </div>
                         
                         <div class="ziaoba-form-error" id="register-error"></div>
                         
@@ -151,9 +156,14 @@ class Auth {
         $username = sanitize_user( $_POST['username'] );
         $email    = sanitize_email( $_POST['email'] );
         $password = $_POST['password'];
+        $dob      = sanitize_text_field( $_POST['dob'] );
 
-        if ( empty( $username ) || empty( $email ) || empty( $password ) ) {
+        if ( empty( $username ) || empty( $email ) || empty( $password ) || empty( $dob ) ) {
             wp_send_json_error( array( 'message' => __( 'Please fill in all fields.', 'ziaoba-asset-management' ) ) );
+        }
+
+        if ( ! AgeRestriction::is_valid_dob( $dob ) ) {
+            wp_send_json_error( array( 'message' => __( 'Invalid Date of Birth. Please check the format and ensure it is not in the future.', 'ziaoba-asset-management' ) ) );
         }
 
         if ( username_exists( $username ) ) {
@@ -169,6 +179,9 @@ class Auth {
         if ( is_wp_error( $user_id ) ) {
             wp_send_json_error( array( 'message' => $user_id->get_error_message() ) );
         }
+
+        // Save DOB
+        update_user_meta( $user_id, 'dob', $dob );
 
         // Auto login after registration
         wp_set_current_user( $user_id );

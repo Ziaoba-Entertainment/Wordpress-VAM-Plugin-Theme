@@ -20,25 +20,173 @@ class AgeRestriction {
         add_action( 'template_redirect', array( $instance, 'check_age_restriction' ) );
         add_action( 'init', array( $instance, 'handle_dob_submit' ) );
         
+        // Login Redirect
+        add_filter( 'login_redirect', array( $instance, 'login_redirect' ), 10, 3 );
+
+        // Admin Profile Fields
+        add_action( 'show_user_profile', array( $instance, 'add_dob_profile_field' ) );
+        add_action( 'edit_user_profile', array( $instance, 'add_dob_profile_field' ) );
+        add_action( 'personal_options_update', array( $instance, 'save_dob_profile_field' ) );
+        add_action( 'edit_user_profile_update', array( $instance, 'save_dob_profile_field' ) );
+
         // REST API Gating
         add_filter( 'rest_pre_dispatch', array( $instance, 'gate_rest_api' ), 10, 3 );
+    }
+
+    /**
+     * Validate DOB Format and Logic
+     */
+    public static function is_valid_dob( $dob ) {
+        if ( empty( $dob ) ) {
+            return false;
+        }
+
+        // Format YYYY-MM-DD
+        if ( ! preg_match( '/^\d{4}-\d{2}-\d{2}$/', $dob ) ) {
+            return false;
+        }
+
+        $parts = explode( '-', $dob );
+        if ( ! checkdate( (int) $parts[1], (int) $parts[2], (int) $parts[0] ) ) {
+            return false;
+        }
+
+        try {
+            $date = new \DateTime( $dob );
+            $now = new \DateTime();
+            
+            // Not in future
+            if ( $date > $now ) {
+                return false;
+            }
+
+            // Reasonable age bounds (e.g., not more than 120 years old)
+            $age = $date->diff( $now )->y;
+            if ( $age > 120 ) {
+                return false;
+            }
+
+            return true;
+        } catch ( \Exception $e ) {
+            return false;
+        }
     }
 
     /**
      * Check if user has set their DOB
      */
     public function check_user_dob() {
-        if ( ! is_user_logged_in() || is_admin() ) {
+        // 1. Logged out users don't get redirected for DOB
+        if ( ! is_user_logged_in() ) {
+            return;
+        }
+
+        // 2. Admins are never blocked
+        if ( current_user_can( 'manage_options' ) ) {
             return;
         }
 
         $user_id = get_current_user_id();
         $dob = get_user_meta( $user_id, 'dob', true );
 
-        // If DOB is missing and not on the required info page, redirect
-        if ( ! $dob && ! is_page( 'required-info' ) && ! is_page( 'profile' ) && ! is_page( 'logout' ) && ! is_page( 'restricted' ) ) {
-            wp_safe_redirect( home_url( '/required-info/' ) );
-            exit;
+        // 3. If DOB is valid, no redirect
+        if ( self::is_valid_dob( $dob ) ) {
+            return;
+        }
+
+        // 4. Whitelist paths to prevent loops
+        $current_url = home_url( add_query_arg( array(), $GLOBALS['wp']->request ) );
+        $required_info_url = home_url( '/required-info/' );
+        
+        // Whitelist slugs
+        $whitelist = array( 'required-info', 'profile', 'logout', 'login', 'register', 'user', 'account' );
+        $is_whitelisted = false;
+        foreach ( $whitelist as $slug ) {
+            if ( is_page( $slug ) || strpos( $_SERVER['REQUEST_URI'], '/' . $slug ) !== false ) {
+                $is_whitelisted = true;
+                break;
+            }
+        }
+
+        if ( $is_whitelisted ) {
+            return;
+        }
+
+        // 5. Fallback if required-info page doesn't exist
+        $page = get_page_by_path( 'required-info' );
+        if ( ! $page ) {
+            error_log( 'Ziaoba VAM: required-info page missing. Redirecting to home.' );
+            return;
+        }
+
+        // 6. Redirect to required info
+        error_log( 'Ziaoba VAM: Redirecting User ' . $user_id . ' to required-info (Missing/Invalid DOB: ' . $dob . ')' );
+        wp_safe_redirect( $required_info_url );
+        exit;
+    }
+
+    /**
+     * Redirect after login if DOB is missing
+     */
+    public function login_redirect( $redirect_to, $request, $user ) {
+        if ( is_wp_error( $user ) || ! $user ) {
+            return $redirect_to;
+        }
+
+        if ( user_can( $user, 'manage_options' ) ) {
+            return $redirect_to;
+        }
+
+        $dob = get_user_meta( $user->ID, 'dob', true );
+        if ( ! self::is_valid_dob( $dob ) ) {
+            error_log( 'Ziaoba VAM: Login Redirect User ' . $user->ID . ' to required-info (Missing/Invalid DOB: ' . $dob . ')' );
+            return home_url( '/required-info/' );
+        }
+
+        return $redirect_to;
+    }
+
+    /**
+     * Add DOB field to WP User Profile
+     */
+    public function add_dob_profile_field( $user ) {
+        $dob = get_user_meta( $user->ID, 'dob', true );
+        $age = self::get_user_age( $user->ID );
+        $can_edit = current_user_can( 'manage_options' );
+        ?>
+        <h3><?php _e( 'Ziaoba Age Verification', 'ziaoba-asset-management' ); ?></h3>
+        <table class="form-table">
+            <tr>
+                <th><label for="dob"><?php _e( 'Date of Birth', 'ziaoba-asset-management' ); ?></label></th>
+                <td>
+                    <?php if ( $can_edit ) : ?>
+                        <input type="date" name="dob" id="dob" value="<?php echo esc_attr( $dob ); ?>" class="regular-text" />
+                    <?php else : ?>
+                        <input type="date" value="<?php echo esc_attr( $dob ); ?>" class="regular-text" disabled />
+                        <p class="description"><?php _e( 'Only administrators can modify the date of birth.', 'ziaoba-asset-management' ); ?></p>
+                    <?php endif; ?>
+                    <p class="description">
+                        <?php printf( __( 'Calculated Age: %d', 'ziaoba-asset-management' ), $age ); ?>
+                    </p>
+                </td>
+            </tr>
+        </table>
+        <?php
+    }
+
+    /**
+     * Save DOB from WP User Profile
+     */
+    public function save_dob_profile_field( $user_id ) {
+        if ( ! current_user_can( 'manage_options' ) ) {
+            return false;
+        }
+
+        if ( isset( $_POST['dob'] ) ) {
+            $dob = sanitize_text_field( $_POST['dob'] );
+            if ( self::is_valid_dob( $dob ) ) {
+                update_user_meta( $user_id, 'dob', $dob );
+            }
         }
     }
 
@@ -64,10 +212,12 @@ class AgeRestriction {
             }
 
             $dob = sanitize_text_field( $_POST['dob'] );
-            if ( $dob ) {
+            if ( self::is_valid_dob( $dob ) ) {
                 update_user_meta( $user_id, 'dob', $dob );
                 wp_safe_redirect( home_url( '/' ) );
                 exit;
+            } else {
+                set_transient( 'ziaoba_dob_error_' . $user_id, __( 'Invalid Date of Birth. Please check the format and ensure it is not in the future.', 'ziaoba-asset-management' ), 30 );
             }
         }
     }

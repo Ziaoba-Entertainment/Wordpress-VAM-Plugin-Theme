@@ -31,10 +31,16 @@ class Shortcodes {
 
         $user_id = get_current_user_id();
         $dob = get_user_meta( $user_id, 'dob', true );
+        $error = get_transient( 'ziaoba_dob_error_' . $user_id );
+        if ( $error ) {
+            delete_transient( 'ziaoba_dob_error_' . $user_id );
+        }
 
-        if ( $dob && ! current_user_can( 'manage_options' ) ) {
+        if ( $dob && ! current_user_can( 'manage_options' ) && AgeRestriction::is_valid_dob( $dob ) ) {
             return '<p>' . __( 'Your information has already been collected. Thank you.', 'ziaoba-asset-management' ) . '</p>';
         }
+
+        $today = date( 'Y-m-d' );
 
         ob_start();
         ?>
@@ -42,11 +48,17 @@ class Shortcodes {
             <h2><?php _e( 'Complete Your Profile', 'ziaoba-asset-management' ); ?></h2>
             <p><?php _e( 'To ensure a safe and personalized experience, please provide your date of birth.', 'ziaoba-asset-management' ); ?></p>
             
+            <?php if ( $error ) : ?>
+                <div class="ziaoba-error-message mb-4 p-3 bg-red-900 text-white rounded">
+                    <?php echo esc_html( $error ); ?>
+                </div>
+            <?php endif; ?>
+
             <form method="post" action="">
                 <?php wp_nonce_field( 'ziaoba_dob_nonce', 'ziaoba_dob_nonce_field' ); ?>
                 <div class="form-group mb-4">
                     <label for="dob" class="block mb-2"><?php _e( 'Date of Birth', 'ziaoba-asset-management' ); ?></label>
-                    <input type="date" id="dob" name="dob" value="<?php echo esc_attr( $dob ); ?>" required class="w-full p-3 bg-gray-800 border border-gray-700 rounded text-white">
+                    <input type="date" id="dob" name="dob" value="<?php echo esc_attr( $dob ); ?>" max="<?php echo $today; ?>" required class="w-full p-3 bg-gray-800 border border-gray-700 rounded text-white">
                 </div>
                 <button type="submit" name="dob_submit" class="btn btn-primary w-full">
                     <?php _e( 'Save and Continue', 'ziaoba-asset-management' ); ?>
