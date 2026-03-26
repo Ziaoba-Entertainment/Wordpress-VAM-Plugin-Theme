@@ -7,61 +7,55 @@
 </head>
 <body <?php body_class(); ?>>
     <?php wp_body_open(); ?>
-
+    
     <header class="site-header" id="mainHeader">
         <div class="container">
             <div class="nav-inner">
-                <div class="logo-wrap">
-                    <?php
-                    if ( has_custom_logo() ) {
-                        the_custom_logo();
-                    } else {
-                        echo '<a href="' . esc_url( home_url( '/' ) ) . '" class="logo">ZIAOBA</a>';
-                    }
-                    ?>
+                <div class="nav-left">
+                    <div class="hamburger" id="mobileToggle">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                    <div class="logo-wrap">
+                        <?php 
+                        if ( has_custom_logo() ) {
+                            the_custom_logo();
+                        } else {
+                            echo '<a href="' . esc_url( home_url( '/' ) ) . '" class="logo">ZIAOBA</a>';
+                        }
+                        ?>
+                    </div>
+                    <nav class="nav-menu" id="navMenu">
+                        <?php
+                        wp_nav_menu( array(
+                            'theme_location' => 'primary',
+                            'container'      => false,
+                            'fallback_cb'    => 'ziaoba_fallback_menu',
+                        ) );
+                        ?>
+                    </nav>
                 </div>
 
-                <nav class="nav-menu" aria-label="<?php esc_attr_e( 'Primary navigation', 'ziaoba-stream' ); ?>">
-                    <?php
-                    wp_nav_menu( array(
-                        'theme_location' => 'primary',
-                        'container'      => false,
-                        'fallback_cb'    => 'ziaoba_fallback_menu',
-                    ) );
-                    ?>
-                </nav>
+                <div class="nav-center">
+                    <form role="search" method="get" class="search-form" id="searchForm" action="<?php echo esc_url( home_url( '/' ) ); ?>">
+                        <div class="search-input-wrapper">
+                            <i data-lucide="search" class="search-icon"></i>
+                            <input type="search" class="search-field" placeholder="<?php echo esc_attr_x( 'Search movies, shows...', 'placeholder', 'ziaoba-stream' ); ?>" value="<?php echo get_search_query(); ?>" name="s" />
+                        </div>
+                    </form>
+                </div>
 
-                <div class="nav-actions">
-                    <div class="search-wrap">
-                        <button type="button" class="icon-button" id="searchToggle" aria-expanded="false" aria-controls="searchForm">
-                            <i data-lucide="search"></i>
-                        </button>
-                        <form role="search" method="get" class="search-form" id="searchForm" action="<?php echo esc_url( home_url( '/' ) ); ?>">
-                            <input type="search" class="search-field" placeholder="<?php echo esc_attr_x( 'Search movies, shows, and lessons...', 'placeholder', 'ziaoba-stream' ); ?>" value="<?php echo esc_attr( get_search_query() ); ?>" name="s" />
-                            <button type="submit" class="search-submit"><i data-lucide="arrow-right"></i></button>
-                        </form>
-                    </div>
-
+                <div class="nav-right">
                     <?php if ( is_user_logged_in() ) : ?>
-                        <div class="user-nav-wrap">
-                            <?php $profile_url = ziaoba_get_auth_url( 'user' ); ?>
-                            <a href="<?php echo esc_url( $profile_url ); ?>" class="user-avatar-link">
-                                <?php
-                                if ( ziaoba_is_um_active() && function_exists( 'um_get_user_avatar_url' ) ) {
-                                    echo '<img src="' . esc_url( um_get_user_avatar_url( get_current_user_id(), 32 ) ) . '" alt="' . esc_attr__( 'Profile avatar', 'ziaoba-stream' ) . '">';
-                                } else {
-                                    echo '<i data-lucide="user"></i>';
-                                }
-                                ?>
-                            </a>
-                            <a href="<?php echo esc_url( ziaoba_get_auth_url( 'logout' ) ); ?>" title="<?php esc_attr_e( 'Logout', 'ziaoba-stream' ); ?>">
-                                <i data-lucide="log-out"></i>
-                            </a>
+                        <div class="auth-links">
+                            <a href="<?php echo esc_url( ziaoba_get_um_url( 'user' ) ); ?>" class="login-link">Profile</a>
+                            <a href="<?php echo esc_url( ziaoba_get_um_url( 'logout' ) ); ?>" class="btn btn-outline btn-sm">Logout</a>
                         </div>
                     <?php else : ?>
                         <div class="auth-links">
-                            <a href="<?php echo esc_url( ziaoba_get_auth_url( 'login' ) ); ?>" class="login-link"><?php esc_html_e( 'Login', 'ziaoba-stream' ); ?></a>
-                            <a href="<?php echo esc_url( ziaoba_get_auth_url( 'register' ) ); ?>" class="btn btn-primary btn-sm"><?php esc_html_e( 'Register', 'ziaoba-stream' ); ?></a>
+                            <a href="<?php echo esc_url( ziaoba_get_um_url( 'login' ) ); ?>" class="login-link">Login</a>
+                            <a href="<?php echo esc_url( ziaoba_get_um_url( 'register' ) ); ?>" class="btn btn-primary btn-sm">Register</a>
                         </div>
                     <?php endif; ?>
                 </div>

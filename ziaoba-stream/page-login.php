@@ -4,41 +4,36 @@
  */
 
 if ( is_user_logged_in() ) {
-    wp_safe_redirect( home_url( '/' ) );
+    wp_redirect( home_url() );
     exit;
 }
 
 get_header(); ?>
 
 <div class="auth-page-wrapper">
-    <div class="auth-container auth-card">
+    <div class="auth-container">
         <div class="auth-header">
-            <p class="auth-eyebrow"><?php esc_html_e( 'Welcome back', 'ziaoba-stream' ); ?></p>
-            <h1 class="auth-title"><?php esc_html_e( 'Sign in to continue watching', 'ziaoba-stream' ); ?></h1>
-            <p class="auth-copy"><?php esc_html_e( 'Use your email address or Google account. Your session can stay active on trusted devices.', 'ziaoba-stream' ); ?></p>
+            <h1 class="auth-title">Sign In</h1>
         </div>
 
-        <div class="auth-content auth-enhanced-form" data-auth-mode="login">
-            <?php
-            if ( ziaoba_is_um_active() && function_exists( 'UM' ) ) {
-                $login_form_id = UM()->options()->get( 'core_login' );
-                echo do_shortcode( $login_form_id ? '[ultimatemember form_id="' . absint( $login_form_id ) . '"]' : '[ultimatemember_login]' );
+        <div class="auth-content">
+            <?php 
+            if ( shortcode_exists( 'ultimatemember' ) && defined( 'ZIAOBA_UM_LOGIN_FORM' ) ) {
+                echo do_shortcode( '[ultimatemember form_id="' . ZIAOBA_UM_LOGIN_FORM . '"]' );
             } else {
-                wp_login_form( array(
-                    'remember'       => true,
-                    'redirect'       => home_url( '/' ),
-                    'label_username' => __( 'Email Address', 'ziaoba-stream' ),
-                    'label_log_in'   => __( 'Sign In', 'ziaoba-stream' ),
-                ) );
+                echo '<p>' . esc_html__( 'Ultimate Member is required to display the login form.', 'ziaoba-stream' ) . '</p>';
             }
             ?>
         </div>
 
-        <div class="auth-footer auth-footer-inline">
+        <div class="auth-footer">
             <?php do_action( 'ziaoba_google_auth_button' ); ?>
-            <div class="auth-alt-link">
-                <?php esc_html_e( 'New to Ziaoba?', 'ziaoba-stream' ); ?>
-                <a href="<?php echo esc_url( ziaoba_get_auth_url( 'register' ) ); ?>"><?php esc_html_e( 'Create your account', 'ziaoba-stream' ); ?></a>
+
+            <div class="auth-footer-text">
+                New to Ziaoba? 
+                <a href="<?php echo esc_url( ziaoba_get_um_url( 'register' ) ); ?>" class="auth-footer-link">
+                    Sign up now.
+                </a>
             </div>
         </div>
     </div>
